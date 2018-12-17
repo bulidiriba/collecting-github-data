@@ -8,8 +8,8 @@ import json
 class Access():
 	def __init__(self):
 		self.github = "https://api.github.com/"
-		self.user = 'bulidiriba'
-		self.token = '1b7f0eaa7f24754552e475c7c17a064a6f06e14c'
+		self.user = ''
+		self.token = ''
 		self.org = 'singnet'
 		self.repo = 'atomspace'
 		self.event_type = 'issues'
