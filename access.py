@@ -3,11 +3,13 @@ import argparse
 import sys
 import shlex
 import subprocess
+import json
 
 class Access():
 	def __init__(self):
 		self.github = "https://api.github.com/"
 		self.user = 'bulidiriba'
+		self.token = '1b7f0eaa7f24754552e475c7c17a064a6f06e14c'
 		self.org = 'singnet'
 		self.repo = 'atomspace'
 		self.event_type = 'issues'
@@ -19,6 +21,7 @@ class Access():
 	def get_arguments(self):
 		parser = argparse.ArgumentParser(description="Access Github data")
 		parser.add_argument('--user', type=str, default=self.user, help="The name of the user")
+		parser.add_argument('--token', type=str, default=self.token, help="The private token of the user")
 		parser.add_argument('--org', type=str, default=self.org, help="The name of the Organization")
 		parser.add_argument('--repo', type=str, default=self.repo, help="The name of the Repositories")
 		parser.add_argument('--event_type', default=self.event_type, type=str, help="The type of the events(e.g issues, commits")
@@ -52,28 +55,53 @@ class Access():
 
 	def access_event(self, args):
 		"""To access any event type with request"""
-		r = requests.get(self.github+"repos/"+args.org+"/"+args.repo+"/"+args.event_type)
-		print(r.headers)
-		print(type(str(r.headers)))
-		#self.save_to_file(str(r.headers))
+		issue_request = requests.get(self.github+"repos/"+args.org+"/"+args.repo+"/"+args.event_type, auth=(args.user, args.token))
+		issue_dictionary = json.loads(issue_request.text)
+		print(len(issue_dictionary))
+
+		issue_url = []
+
+		i = 0
+		while i < len(issue_dictionary):
+			a = issue_dictionary[i]['url']
+			issue_url.append(a)
+			i = i + 1
+
+		#print(issue_url)
+
+		for issue in issue_url:
+			#r = requests.get(self.github+"repos/"+args.org+"/"+args.repo+"/"+args.event_type+"/"+str(i), auth=(args.user, args.token))
+			issue_r = requests.get(issue, auth=(args.user, args.token))
+			issue_rdict = json.loads(issue_r.text)
+			number = issue_rdict['number']
+			# create a specific json file for each issue with corresponding to its issue number 
+			with open("singnet/atomspace/issues/issues-"+str(number)+".json", 'wb') as f:
+				# store the content of the issue in the created json file
+				f.write(issue_r.content)
+				
+	
 		
 
-	def access_event2(self, args):
-		"""To access any event type with curl"""
-		cmd = "curl -I https://api.github.com/repos/"+args.org+"/"+args.repo+"/"+args.event_type
-		a = shlex.split(cmd)
-		process = subprocess.Popen(a, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		stdout, stderr = process.communicate()
-		print(str(stdout))
-		#print(type(str(stdout)))
-		#self.save_to_file(str(stdout))
+		#print(r.headers)
+		#print(r.headers['Content-Type'])
+
+		#print(r.headers[''])
+
+		#print(r.content)
+		'''
+		data = r.json()
+		with open('commits.json', 'w') as f:
+			json.dump(data, f)
+		'''
+		#print(r.content)
+		#print(type(str(r.headers)))
+		#self.save_to_file(str(r.headers))
 
 	def main(self):
 		args = self.get_arguments()
 		valid = self.validate_arguments(args)
 		
-		#self.access_event(args)
-		self.access_event2(args)
+		self.access_event(args)
 
 """Initialize the class"""
 access = Access()
